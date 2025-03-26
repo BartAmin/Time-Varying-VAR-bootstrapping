@@ -11,11 +11,14 @@ library(devtools)
 library(tvvarGAM)
 library(pROC)
 library(ggplot2)
+library(yardstick)
+library(patchwork)
+
 
 p_val_null = list()
 p_val_var = list() 
 nIter = 1000 # Amount of simulations in one iteration
-nSim = 500 # Amount of iterations
+nSim = 200 # Amount of iterations
 n = 252 # Sample size (first two observations are omitted)
 p = 5 # Number of variables in VAR
 
@@ -29,7 +32,7 @@ for(q in 1:nSim){
   stationary_data = matrix(0, nrow = n, ncol = p)  
   
   # Generate intercepts
-  intercepts = runif(p, 2, 4)
+  intercepts = runif(p, 3, 4)
   
   # Fill phi matrix with random (increasing/decreasing) linear sequences, diagonal > off-diagonal
   phi_mat = matrix(runif(p * p, 0.01, 0.1) * sample(c(1, -1), (p * p), replace = TRUE), p, p)
@@ -85,13 +88,13 @@ for(q in 1:nSim){
   # Perform tvVAR bootstrapping procedure to simulate p-values
   p_val_var[[q]] = tvVAR_bootstrap(timevarying_data, nIter, n, p)
 }
-  
+
 # ==========================
 # Evaluate type-1 error rate
 # ==========================
 
 # Set to your own path
-pdf("Error_control.pdf", width = 7, height = 5)
+#pdf("Error_control.pdf", width = 7, height = 5)
 
 # ---- ECDF stationary p-values; evaluate type 1 error rate for each parameter ----
 
@@ -103,7 +106,7 @@ intercepts_stat <- sort(unlist(lapply(p_val_null, function(mat) mat[1, ])))
 
 # Extract off-diagonal values
 off_diagonal_values_stat <- sort(unlist(lapply(p_val_null, \(mat) {
-trimmed <- mat[-1, ]           # Remove first row
+trimmed <- mat[-1, ]           # Remove first row of intercepts
 trimmed[!diag(nrow(trimmed))]  # Inlcude all off-diagonal elements
 })))
 
@@ -114,15 +117,17 @@ Type = c(rep("Diagonal", length(diagonal_values_stat)),
          rep("Intercepts", length(intercepts_stat)))
 )
 
-# Plot ECDF using ggplot2 with reference line
-ggplot(df_stat, aes(x = Value, color = Type)) +
-  stat_ecdf(geom = "step") +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") + 
-  labs(title = "ECDF of stationary P-values",
-     x = "P-values",
-     y = "ECDF",
-     color = "Type") +
-  theme_minimal()
+plot1 = ggplot(df_stat, aes(x = Value, color = Type)) +
+          stat_ecdf(geom = "step") +
+          geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") + 
+          labs(title = paste('T = ', n - 2),   
+               x = "P-values",
+               y = "ECDF",
+               color = "Type") +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(hjust = 0.5)  
+          )
 
 # ============================
 # Note on type-1 error rate
@@ -138,16 +143,34 @@ ggplot(df_stat, aes(x = Value, color = Type)) +
 # Extract non-stationary p-values
 diagonal_values_nonstat <- sort(unlist(lapply(p_val_var, function(mat) diag(mat[-1, ]))))
 
-# Prepare data for ROC
-true = c(rep(0, length(diagonal_values_stat)), rep(1, length(diagonal_values_stat)))
-prob = c(diagonal_values_stat, diagonal_values_nonstat)
+# Prepare data for ROC yardstick()
+true = c(rep(1, length(diagonal_values_stat)), rep(0, length(diagonal_values_stat)))
+prob = c(diagonal_values_nonstat, diagonal_values_stat)
 
-# Calculate ROC curve
-roc_obj <- roc(true, prob)
+df_roc <- data.frame(
+  true = factor(true, levels = c(0, 1)),  
+  prob  = prob
+)
 
-# Plot ROC (and AUC)
-plot(roc_obj, col = "#950606", lwd = 2, main = paste("ROC Curve Autoregressive Parameter | AUC =", 
-                                                     auc(roc_obj))) # Extract AUC too
+# Compute data for ROC curve
+roc_data <- roc_curve(df_roc, true, prob)
 
-dev.off()
+plot2 = ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
+          geom_line(color = 'red', size = 0.25) +
+          geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+          labs(title = paste('T = ', n - 2),   
+               x = "False Positive Rate",
+               y = "True Positive Rate"
+          ) +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(hjust = 0.5)  
+          )
 
+# Print Area Under Curve (AUC)
+print(roc_auc(df_roc, true, prob)$.estimate)
+
+#Print both plots
+plot1 + plot2
+
+#dev.off()

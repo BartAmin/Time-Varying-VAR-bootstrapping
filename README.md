@@ -17,13 +17,13 @@ If the p-value is below a chosen significance level (e.g., α = 0.05), it sugges
 ### Dependencies
 
 This project requires the following R packages:
-
 - [`mlVAR`](https://cran.r-project.org/package=mlVAR)  
 - [`mgm`](https://cran.r-project.org/package=mgm)  
-- [`devtools`](https://cran.r-project.org/package=devtools) 
-- [`tvvarGAM`](https://github.com/LauraBringmann/tvvarGAM) 
-- [`pROC`](https://cran.r-project.org/package=pROC) 
-- [`ggplot2`](https://cran.r-project.org/package=ggplot2)
+- [`devtools`](https://cran.r-project.org/package=devtools)  
+- [`tvvarGAM`](https://github.com/LauraBringmann/tvvarGAM)  
+- [`yardstick`](https://tidymodels.github.io/yardstick/)  
+- [`ggplot2`](https://cran.r-project.org/package=ggplot2)  
+- [`patchwork`](https://cran.r-project.org/package=patchwork)
 
 To install `tvvarGAM` from GitHub:
 

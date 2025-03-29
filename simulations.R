@@ -34,7 +34,7 @@ for(q in 1:nSim){
   # Generate intercepts
   intercepts = runif(p, 3, 4)
   
-  # Fill phi matrix with random (increasing/decreasing) linear sequences, diagonal > off-diagonal
+  # Fill phi matrix with random fixed parameters, diagonal > off-diagonal
   phi_mat = matrix(runif(p * p, 0.01, 0.1) * sample(c(1, -1), (p * p), replace = TRUE), p, p)
   diag(phi_mat) = runif(p, 0.2, 0.5)
   

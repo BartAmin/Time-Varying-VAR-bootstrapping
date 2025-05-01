@@ -19,7 +19,7 @@ p_val_null = list()
 p_val_var = list() 
 nIter = 1000 # Amount of simulations in one iteration
 nSim = 200 # Amount of iterations
-n = 252 # Sample size (first two observations are omitted)
+n = 102 # Sample size (first two observations are omitted)
 p = 5 # Number of variables in VAR
 
 for(q in 1:nSim){
@@ -112,8 +112,8 @@ trimmed[!diag(nrow(trimmed))]  # Inlcude all off-diagonal elements
 
 df_stat <- data.frame(
 Value = c(diagonal_values_stat, off_diagonal_values_stat, intercepts_stat),
-Type = c(rep("Diagonal", length(diagonal_values_stat)),
-         rep("Off-Diagonal", length(off_diagonal_values_stat)),
+Type = c(rep("Autoregressive", length(diagonal_values_stat)),
+         rep("Cross-lagged", length(off_diagonal_values_stat)),
          rep("Intercepts", length(intercepts_stat)))
 )
 
